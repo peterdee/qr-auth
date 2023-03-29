@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import {
   Pressable,
@@ -9,6 +9,7 @@ import {
 
 import { BACKEND_URL, EVENTS } from './configuration';
 import type { ConnectionError, MessageData } from './types';
+import SignUp from './components/SignUp';
 import Spinner from './components/Spinner';
 
 const styles = StyleSheet.create({
@@ -24,7 +25,9 @@ export default function App(): React.ReactElement {
   const [connection, setConnection] = useState<WebSocket | null>(null);
   const [error, setError] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(true);
+  const [name, setName] = useState<string>('');
   const [showReconnect, setShowReconnect] = useState<boolean>(false);
+  const [view, setView] = useState<string>('main');
 
   const handleConnectionError = (event: Event) => {
     const errorEvent = event as ConnectionError;
@@ -36,14 +39,32 @@ export default function App(): React.ReactElement {
     return setError('Something went wrong!');
   };
 
-  const handleIncomingMessage = (message: MessageEvent<string>) => {
-    try {
-      const messageData: MessageData = JSON.parse(message.data);
-      if (messageData.event === EVENTS.ping) {
-        connection.send(JSON.stringify({ event: EVENTS.pingResponse }));
+  const handleIncomingMessage = useCallback(
+    (message: MessageEvent<string>) => {
+      try {
+        console.log(connection);
+        if (connection && connection.readyState === 1) {
+          const messageData: MessageData = JSON.parse(message.data);
+          if (messageData.event === EVENTS.ping) {
+            console.log('ping inc');
+            connection.send(JSON.stringify({ event: EVENTS.pingResponse }));
+          }
+        }
+      } catch (parsingError) {
+        console.log(parsingError);
       }
-    } catch (parsingError) {
-      console.log(parsingError);
+    },
+    [connection],
+  );
+
+  const handleInput = (value: string) => {
+    setName(value);
+  };
+
+  const handleNavigation = (destination: string): void => {
+    console.log('navigate to', destination);
+    if (destination === 'sign-up') {
+      setView('sign-up');
     }
   };
 
@@ -51,20 +72,23 @@ export default function App(): React.ReactElement {
     console.log('reconnect');
   };
 
-  const handleViews = (view: string): void => {
-    console.log('navigate to', view);
+  const handleSubmitSignUp = (): void => {
+    connection.send(JSON.stringify({
+      data: name,
+      event: EVENTS.registerUser,
+    }));
   };
 
   useEffect(
     (): (() => void) => {
       const socketConnection = new WebSocket(BACKEND_URL);
       socketConnection.onopen = (): void => {
+        socketConnection.onerror = (event) => handleConnectionError(event);
+        socketConnection.onmessage = (message) => handleIncomingMessage(message);
         setConnection(socketConnection);
         setLoading(false);
         console.log('CONNECTED');
       };
-      socketConnection.onerror = handleConnectionError;
-      socketConnection.onmessage = handleIncomingMessage;
 
       return (): void => {
         socketConnection.send(JSON.stringify({
@@ -97,16 +121,27 @@ export default function App(): React.ReactElement {
           ) }
           { !error && (
             <>
-              <Pressable onPress={(): void => handleViews('sign-in')}>
-                <Text>
-                  Sign in
-                </Text>
-              </Pressable>
-              <Pressable onPress={(): void => handleViews('sign-up')}>
-                <Text>
-                  Sign up
-                </Text>
-              </Pressable>
+              { view === 'main' && (
+                <>
+                  <Pressable onPress={(): void => handleNavigation('sign-in')}>
+                    <Text>
+                      Sign in
+                    </Text>
+                  </Pressable>
+                  <Pressable onPress={(): void => handleNavigation('sign-up')}>
+                    <Text>
+                      Sign up
+                    </Text>
+                  </Pressable>
+                </>
+              ) }
+              { view === 'sign-up' && (
+                <SignUp
+                  handleInput={handleInput}
+                  handleSubmit={handleSubmitSignUp}
+                  name={name}
+                />
+              ) }
             </>
           ) }
         </View>

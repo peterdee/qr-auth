@@ -8,6 +8,7 @@ export const EVENTS = {
   clientDisconnect: 'client-disconnect',
   ping: 'ping',
   pingResponse: 'pong',
+  registerUser: 'register-user',
 };
 
 export const SPACER = 16;
