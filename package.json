@@ -1,7 +1,22 @@
 {
   "name": "qr-auth",
+  "description": "QR Auth demo",
   "version": "1.0.0",
   "private": true,
+  "author": {
+    "name": "Peter Dyumin",
+    "url": "https://github.com/peterdee"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=7.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/peterdee/qr-auth"
+  },
+  "homepage": "https://github.com/peterdee/qr-auth",
+  "license": "MIT",
   "main": "node_modules/expo/AppEntry.js",
   "scripts": {
     "android": "expo start --android",
@@ -12,12 +27,12 @@
   "dependencies": {
     "@types/react": "~18.0.27",
     "expo": "~48.0.9",
+    "expo-barcode-scanner": "~12.3.2",
     "expo-status-bar": "~1.4.4",
     "react": "18.2.0",
     "react-native": "0.71.4",
     "react-native-qrcode-svg": "^6.2.0",
-    "typescript": "^4.9.4",
-    "expo-barcode-scanner": "~12.3.2"
+    "typescript": "^4.9.4"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",
