@@ -1,4 +1,10 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
+import type { BarCodeScannerResult } from 'expo-barcode-scanner';
 import { StatusBar } from 'expo-status-bar';
 import {
   Pressable,
@@ -8,8 +14,11 @@ import {
 } from 'react-native';
 
 import { BACKEND_URL, EVENTS } from './configuration';
-import type { ConnectionError, MessageData } from './types';
-import SignUp from './components/SignUp';
+import type { ConnectionError, MessageData, Views } from './types';
+import Main from './views/Main';
+import Scanner from './views/Scanner';
+import SignIn from './views/SignIn';
+import SignUp from './views/SignUp';
 import Spinner from './components/Spinner';
 
 const styles = StyleSheet.create({
@@ -22,12 +31,15 @@ const styles = StyleSheet.create({
 });
 
 export default function App(): React.ReactElement {
-  const [connection, setConnection] = useState<WebSocket | null>(null);
+  const [connectionId, setConnectionId] = useState<string>('');
   const [error, setError] = useState<string>('');
+  const [isRegistered, setIsRegistered] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
   const [name, setName] = useState<string>('');
   const [showReconnect, setShowReconnect] = useState<boolean>(false);
-  const [view, setView] = useState<string>('main');
+  const [view, setView] = useState<Views>('main');
+
+  const connectionRef = useRef<WebSocket>();
 
   const handleConnectionError = (event: Event) => {
     const errorEvent = event as ConnectionError;
@@ -39,55 +51,81 @@ export default function App(): React.ReactElement {
     return setError('Something went wrong!');
   };
 
-  const handleIncomingMessage = useCallback(
-    (message: MessageEvent<string>) => {
-      try {
-        console.log(connection);
-        if (connection && connection.readyState === 1) {
-          const messageData: MessageData = JSON.parse(message.data);
-          if (messageData.event === EVENTS.ping) {
-            console.log('ping inc');
-            connection.send(JSON.stringify({ event: EVENTS.pingResponse }));
-          }
-        }
-      } catch (parsingError) {
-        console.log(parsingError);
+  const handleIncomingMessage = (message: MessageEvent<string>): null | void => {
+    if (!(connectionRef && connectionRef.current
+      && connectionRef.current.readyState === 1)) {
+      return null;
+    }
+    const { current: connection } = connectionRef;
+    try {
+      const messageData: MessageData = JSON.parse(message.data);
+      if (messageData.event === EVENTS.authenticateTarget) {
+        setIsRegistered(true);
+        setName(messageData.data || '');
+        return setView('main');
       }
-    },
-    [connection],
-  );
+      if (messageData.event === EVENTS.ping) {
+        return connection.send(JSON.stringify({ event: EVENTS.pingResponse }));
+      }
+      if (messageData.event === EVENTS.registerConnection) {
+        setConnectionId(messageData.data || '');
+        return setLoading(false);
+      }
+      return null;
+    } catch (parsingError) {
+      return console.log('parsing error', parsingError);
+    }
+  };
 
   const handleInput = (value: string) => {
     setName(value);
   };
 
-  const handleNavigation = (destination: string): void => {
-    console.log('navigate to', destination);
-    if (destination === 'sign-up') {
-      setView('sign-up');
-    }
-  };
+  const handleNavigation = (destination: Views): void => setView(destination);
 
   const handleReconnect = (): void => {
     console.log('reconnect');
   };
 
-  const handleSubmitSignUp = (): void => {
+  const handleScanned = (result: BarCodeScannerResult): void => {
+    if (!(connectionRef && connectionRef.current
+      && connectionRef.current.readyState === 1)) {
+      return null;
+    }
+    // setLoading(true);
+    const targetId = result.data;
+    const { current: connection } = connectionRef;
     connection.send(JSON.stringify({
-      data: name,
-      event: EVENTS.registerUser,
+      data: targetId,
+      event: EVENTS.authenticateTarget,
     }));
+    return handleNavigation('main');
   };
+
+  const handleSubmitSignUp = useCallback(
+    (): null | void => {
+      if (!(connectionRef && connectionRef.current
+        && connectionRef.current.readyState === 1)) {
+        return null;
+      }
+      const { current: connection } = connectionRef;
+      connection.send(JSON.stringify({
+        data: name,
+        event: EVENTS.registerUser,
+      }));
+      setIsRegistered(true);
+      return handleNavigation('main');
+    },
+    [name],
+  );
 
   useEffect(
     (): (() => void) => {
       const socketConnection = new WebSocket(BACKEND_URL);
       socketConnection.onopen = (): void => {
-        socketConnection.onerror = (event) => handleConnectionError(event);
-        socketConnection.onmessage = (message) => handleIncomingMessage(message);
-        setConnection(socketConnection);
-        setLoading(false);
-        console.log('CONNECTED');
+        socketConnection.onerror = handleConnectionError;
+        socketConnection.onmessage = handleIncomingMessage;
+        connectionRef.current = socketConnection;
       };
 
       return (): void => {
@@ -103,7 +141,7 @@ export default function App(): React.ReactElement {
   return (
     <View style={styles.container}>
       { loading && (<Spinner />) }
-      { !loading && (
+      { !loading && connectionId && (
         <View>
           { !!error && (
             <>
@@ -122,18 +160,24 @@ export default function App(): React.ReactElement {
           { !error && (
             <>
               { view === 'main' && (
-                <>
-                  <Pressable onPress={(): void => handleNavigation('sign-in')}>
-                    <Text>
-                      Sign in
-                    </Text>
-                  </Pressable>
-                  <Pressable onPress={(): void => handleNavigation('sign-up')}>
-                    <Text>
-                      Sign up
-                    </Text>
-                  </Pressable>
-                </>
+                <Main
+                  connectionId={connectionId}
+                  handleNavigation={handleNavigation}
+                  isRegistered={isRegistered}
+                  name={name}
+                />
+              ) }
+              { view === 'scanner' && (
+                <Scanner
+                  handleNavigation={handleNavigation}
+                  handleScanned={handleScanned}
+                />
+              ) }
+              { view === 'sign-in' && (
+                <SignIn
+                  connectionId={connectionId}
+                  handleNavigation={handleNavigation}
+                />
               ) }
               { view === 'sign-up' && (
                 <SignUp
