@@ -1,11 +1,15 @@
 import React, { memo } from 'react';
-import { Pressable, Text } from 'react-native';
+import { Text, View } from 'react-native';
 
-import { Views } from '../../types';
+import Button from '../../components/Button';
+import { SPACER } from '../../configuration';
+import styles from './styles';
+import type { Views } from '../../types';
 
 interface MainProps {
   connectionId: string;
   handleNavigation: (value: Views) => void;
+  handleSignOut: () => void;
   isRegistered: boolean;
   name: string;
 }
@@ -14,42 +18,59 @@ function Main(props: MainProps): React.ReactElement {
   const {
     connectionId,
     handleNavigation,
+    handleSignOut,
     isRegistered,
     name,
   } = props;
 
   return (
-    <>
-      <Text>
+    <View style={styles.mainWrap}>
+      <Text style={styles.title}>
+        QR Auth Demo
+      </Text>
+      <Text style={styles.connectionId}>
         { `Connection ID: ${connectionId}` }
       </Text>
       { !isRegistered && (
         <>
-          <Pressable onPress={(): void => handleNavigation('sign-in')}>
-            <Text>
-              Sign in
-            </Text>
-          </Pressable>
-          <Pressable onPress={(): void => handleNavigation('sign-up')}>
-            <Text>
-              Sign up
-            </Text>
-          </Pressable>
+          <Button
+            customStyles={{
+              marginTop: SPACER * 1.5,
+            }}
+            onPress={(): void => handleNavigation('sign-in')}
+            text="Sign in"
+          />
+          <Button
+            customStyles={{
+              marginTop: SPACER * 1.5,
+            }}
+            onPress={(): void => handleNavigation('sign-up')}
+            text="Sign up"
+          />
         </>
       ) }
       { isRegistered && (
         <>
-          <Text>
-            { `Hello, ${name}` }
+          <Text style={styles.registered}>
+            { `Hello, ${name}!` }
           </Text>
-          <Pressable onPress={(): void => handleNavigation('scanner')}>
-            <Text>
-              Authenticate another device
-            </Text>
-          </Pressable>
+          <Button
+            customStyles={{
+              marginTop: SPACER * 1.5,
+            }}
+            onPress={(): void => handleNavigation('scanner')}
+            text="Authenticate another device"
+          />
+          <Button
+            customStyles={{
+              marginTop: SPACER * 1.5,
+            }}
+            onPress={handleSignOut}
+            text="Sign out"
+          />
         </>
       ) }
-    </>
+    </View>
   );
 }
 

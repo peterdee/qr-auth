@@ -102,6 +102,19 @@ export default function App(): React.ReactElement {
     return handleNavigation('main');
   };
 
+  const handleSignOut = (): null | void => {
+    setIsRegistered(false);
+    setName('');
+    if (!(connectionRef && connectionRef.current
+      && connectionRef.current.readyState === 1)) {
+      return null;
+    }
+    const { current: connection } = connectionRef;
+    return connection.send(JSON.stringify({
+      event: EVENTS.signOut,
+    }));
+  };
+
   const handleSubmitSignUp = useCallback(
     (): null | void => {
       if (!(connectionRef && connectionRef.current
@@ -140,6 +153,7 @@ export default function App(): React.ReactElement {
 
   return (
     <View style={styles.container}>
+      <StatusBar />
       { loading && (<Spinner />) }
       { !loading && connectionId && (
         <View>
@@ -163,6 +177,7 @@ export default function App(): React.ReactElement {
                 <Main
                   connectionId={connectionId}
                   handleNavigation={handleNavigation}
+                  handleSignOut={handleSignOut}
                   isRegistered={isRegistered}
                   name={name}
                 />
@@ -190,7 +205,6 @@ export default function App(): React.ReactElement {
           ) }
         </View>
       ) }
-      <StatusBar />
     </View>
   );
 }
