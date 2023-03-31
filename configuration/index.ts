@@ -1,5 +1,6 @@
-// export const BACKEND_URL = 'http://localhost:1515';
-export const BACKEND_URL = 'http://192.168.2.106:1515';
+import backendURL from './backend';
+
+export const BACKEND_URL = backendURL;
 
 export const COLORS = {
   accent: '#1D0C59',

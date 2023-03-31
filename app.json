@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "qr-auth",
-    "slug": "qr-auth",
+    "name": "QR Auth demo",
+    "slug": "qr-auth-demo",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",

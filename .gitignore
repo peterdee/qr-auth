@@ -18,3 +18,4 @@ web-build/
 
 .env
 /idea
+/configuration/backend.ts
