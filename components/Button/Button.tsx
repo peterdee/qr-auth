@@ -5,6 +5,7 @@ import styles from './styles';
 
 interface ButtonProps {
   customStyles?: object;
+  disabled?: boolean;
   onPress: () => void;
   text: string;
 }
@@ -12,17 +13,19 @@ interface ButtonProps {
 function Button(props: ButtonProps): React.ReactElement {
   const {
     customStyles,
+    disabled,
     onPress,
     text,
   } = props;
 
   return (
     <Pressable
+      disabled={disabled}
+      onPress={onPress}
       style={{
         ...styles.button,
         ...customStyles,
       }}
-      onPress={onPress}
     >
       <Text style={styles.text}>
         { text.toUpperCase() }
@@ -33,6 +36,7 @@ function Button(props: ButtonProps): React.ReactElement {
 
 Button.defaultProps = {
   customStyles: {},
+  disabled: false,
 };
 
 export default memo(Button);

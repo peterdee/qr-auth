@@ -1,13 +1,12 @@
 import React, { memo } from 'react';
-import {
-  Dimensions,
-  Pressable,
-  Text,
-  View,
-} from 'react-native';
 import QR from 'react-native-qrcode-svg';
+import { Text, View } from 'react-native';
 
-import { Views } from '../../types';
+import Button from '../../components/Button';
+import getElementSize from '../../utilities/get-element-size';
+import { SPACER } from '../../configuration';
+import styles from './styles';
+import type { Views } from '../../types';
 
 interface SignInProps {
   connectionId: string;
@@ -21,19 +20,24 @@ function SignIn(props: SignInProps): React.ReactElement {
   } = props;
 
   return (
-    <View>
-      <Text>
+    <View style={styles.wrap}>
+      <Text style={styles.title}>
+        Sign In
+      </Text>
+      <Text style={styles.subtitle}>
         Scan this QR on another device to sign in
       </Text>
       <QR
-        size={Math.floor(Dimensions.get('screen').width * 0.8)}
+        size={getElementSize({ widthPercent: 80 }).width}
         value={connectionId}
       />
-      <Pressable onPress={(): void => handleNavigation('main')}>
-        <Text>
-          Cancel
-        </Text>
-      </Pressable>
+      <Button
+        customStyles={{
+          marginTop: SPACER * 1.5,
+        }}
+        onPress={(): void => handleNavigation('main')}
+        text="Cancel"
+      />
     </View>
   );
 }

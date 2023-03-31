@@ -1,19 +1,17 @@
 import React, { memo } from 'react';
 import type { BarCodeScannerResult } from 'expo-barcode-scanner';
-import {
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
 import { StatusBar } from 'expo-status-bar';
+import { StyleSheet, Text, View } from 'react-native';
 
+import Button from './components/Button';
+import { COLORS, SPACER } from './configuration';
 import Main from './views/Main';
 import Scanner from './views/Scanner';
 import SignIn from './views/SignIn';
 import SignUp from './views/SignUp';
 import Spinner from './components/Spinner';
 import type { Views } from './types';
+import getElementSize from './utilities/get-element-size';
 
 interface AppLayoutProps {
   connectionId: string;
@@ -36,6 +34,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flex: 1,
     justifyContent: 'center',
+  },
+  error: {
+    color: COLORS.error,
+    fontSize: SPACER * 2,
+    fontWeight: '200',
+    textAlign: 'center',
+    width: getElementSize({ widthPercent: 80 }).width,
   },
 });
 
@@ -64,15 +69,17 @@ function AppLayout(props: AppLayoutProps): React.ReactElement {
         <View>
           { !!error && (
             <>
-              <Text>
+              <Text style={styles.error}>
                 { error }
               </Text>
               { showReconnect && (
-                <Pressable onPress={handleReconnect}>
-                  <Text>
-                    Reconnect
-                  </Text>
-                </Pressable>
+                <Button
+                  customStyles={{
+                    marginTop: SPACER * 1.5,
+                  }}
+                  onPress={handleReconnect}
+                  text="Reconnect"
+                />
               ) }
             </>
           ) }
@@ -102,6 +109,7 @@ function AppLayout(props: AppLayoutProps): React.ReactElement {
               { view === 'sign-up' && (
                 <SignUp
                   handleInput={handleInput}
+                  handleNavigation={handleNavigation}
                   handleSubmit={handleSubmitSignUp}
                   name={name}
                 />

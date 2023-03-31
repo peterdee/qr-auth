@@ -16,6 +16,7 @@ import type {
 
 export default function App(): React.ReactElement {
   const [connectionId, setConnectionId] = useState<string>('');
+  const [connectionTime, setConnectionTime] = useState<number>(0);
   const [error, setError] = useState<string>('');
   const [isRegistered, setIsRegistered] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
@@ -31,6 +32,9 @@ export default function App(): React.ReactElement {
     setShowReconnect(true);
     if (errorEvent.message && errorEvent.message.includes('Connection refused')) {
       return setError('Could not connect to the server!');
+    }
+    if (errorEvent.message && errorEvent.message.includes('Socket is not connected')) {
+      return setError('Server connection has been closed!');
     }
     return setError('Something went wrong!');
   };
@@ -62,7 +66,13 @@ export default function App(): React.ReactElement {
   };
 
   const handleReconnect = (): void => {
-    console.log('reconnect');
+    setConnectionId('');
+    setConnectionTime(Date.now());
+    setError('');
+    setIsRegistered(false);
+    setLoading(true);
+    setName('');
+    return setShowReconnect(false);
   };
 
   const handleScanned = (result: BarCodeScannerResult): void => {
@@ -125,7 +135,7 @@ export default function App(): React.ReactElement {
         return socketConnection.close(0, EVENTS.clientDisconnect);
       };
     },
-    [],
+    [connectionTime],
   );
 
   return (
