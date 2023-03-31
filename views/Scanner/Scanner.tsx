@@ -1,11 +1,14 @@
 import React, { memo, useEffect } from 'react';
+import { Alert, View } from 'react-native';
 import {
   BarCodeScanner,
   type BarCodeScannerResult,
 } from 'expo-barcode-scanner';
-import { Alert, Pressable, Text } from 'react-native';
 
-import { Views } from '../../types';
+import Button from '../../components/Button';
+import { SPACER } from '../../configuration';
+import styles from './styles';
+import type { Views } from '../../types';
 
 interface ScannerProps {
   handleNavigation: (value: Views) => void;
@@ -24,7 +27,7 @@ function Scanner(props: ScannerProps): React.ReactElement {
         if (status !== 'granted') {
           Alert.alert(
             'Camera access denied!',
-            'Could not scan the code!',
+            'Please allow access to the camera!',
           );
         }
       });
@@ -33,14 +36,20 @@ function Scanner(props: ScannerProps): React.ReactElement {
   );
 
   return (
-    <>
-      <BarCodeScanner onBarCodeScanned={handleScanned} />
-      <Pressable onPress={(): void => handleNavigation('main')}>
-        <Text>
-          Cancel
-        </Text>
-      </Pressable>
-    </>
+    <View style={styles.wrap}>
+      <BarCodeScanner
+        onBarCodeScanned={handleScanned}
+        style={styles.scannerWindow}
+      />
+      <Button
+        customStyles={{
+          bottom: SPACER * 3,
+          position: 'absolute',
+        }}
+        onPress={(): void => handleNavigation('main')}
+        text="Cancel"
+      />
+    </View>
   );
 }
 

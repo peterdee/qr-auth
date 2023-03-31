@@ -4,6 +4,7 @@ import React, {
   useRef,
   useState,
 } from 'react';
+import { Alert } from 'react-native';
 import type { BarCodeScannerResult } from 'expo-barcode-scanner';
 
 import AppLayout from './AppLayout';
@@ -50,7 +51,14 @@ export default function App(): React.ReactElement {
       if (messageData.event === EVENTS.authenticateTarget) {
         setIsRegistered(true);
         setName(messageData.data || '');
+        Alert.alert('Your device has been authenticated!');
         return setView('main');
+      }
+      if (messageData.event === EVENTS.invalidTarget) {
+        return Alert.alert(
+          'Authentication failed!',
+          'Device that you are authenticating is disconnected or has a connection issue!',
+        );
       }
       if (messageData.event === EVENTS.ping) {
         return connection.send(JSON.stringify({ event: EVENTS.pingResponse }));
@@ -59,9 +67,26 @@ export default function App(): React.ReactElement {
         setConnectionId(messageData.data || '');
         return setLoading(false);
       }
+      if (messageData.event === EVENTS.serverDisconnect) {
+        connection.close(0, EVENTS.serverDisconnect);
+        setConnectionId('');
+        setIsRegistered(false);
+        setName('');
+        setShowReconnect(true);
+        return setError('Server connection has been closed!');
+      }
+      if (messageData.event === EVENTS.unauthorized) {
+        return Alert.alert(
+          'Authorization failed!',
+          'You are not authorized to perform this operation!',
+        );
+      }
       return null;
-    } catch (parsingError) {
-      return console.log('parsing error', parsingError);
+    } catch {
+      return Alert.alert(
+        'Parsing error!',
+        'Incoming message is invalid!',
+      );
     }
   };
 
@@ -86,6 +111,10 @@ export default function App(): React.ReactElement {
       data: targetId,
       event: EVENTS.authenticateTarget,
     }));
+    Alert.alert(
+      'Device authenticated!',
+      `Device ${targetId} has been authenticated!`,
+    );
     return setView('main');
   };
 

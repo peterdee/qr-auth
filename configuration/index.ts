@@ -12,11 +12,14 @@ export const COLORS = {
 export const EVENTS = {
   authenticateTarget: 'authenticate-target',
   clientDisconnect: 'client-disconnect',
+  invalidTarget: 'invalid-target',
   ping: 'ping',
   pingResponse: 'pong',
   registerConnection: 'register-connection',
   registerUser: 'register-user',
+  serverDisconnect: 'server-disconnect',
   signOut: 'sign-out',
+  unauthorized: 'unauthorized',
 };
 
 export const SPACER = 16;
