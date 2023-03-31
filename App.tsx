@@ -5,30 +5,14 @@ import React, {
   useState,
 } from 'react';
 import type { BarCodeScannerResult } from 'expo-barcode-scanner';
-import { StatusBar } from 'expo-status-bar';
-import {
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
 
+import AppLayout from './AppLayout';
 import { BACKEND_URL, EVENTS } from './configuration';
-import type { ConnectionError, MessageData, Views } from './types';
-import Main from './views/Main';
-import Scanner from './views/Scanner';
-import SignIn from './views/SignIn';
-import SignUp from './views/SignUp';
-import Spinner from './components/Spinner';
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
+import type {
+  ConnectionError,
+  MessageData,
+  Views,
+} from './types';
 
 export default function App(): React.ReactElement {
   const [connectionId, setConnectionId] = useState<string>('');
@@ -77,12 +61,6 @@ export default function App(): React.ReactElement {
     }
   };
 
-  const handleInput = (value: string) => {
-    setName(value);
-  };
-
-  const handleNavigation = (destination: Views): void => setView(destination);
-
   const handleReconnect = (): void => {
     console.log('reconnect');
   };
@@ -92,14 +70,13 @@ export default function App(): React.ReactElement {
       && connectionRef.current.readyState === 1)) {
       return null;
     }
-    // setLoading(true);
     const targetId = result.data;
     const { current: connection } = connectionRef;
     connection.send(JSON.stringify({
       data: targetId,
       event: EVENTS.authenticateTarget,
     }));
-    return handleNavigation('main');
+    return setView('main');
   };
 
   const handleSignOut = (): null | void => {
@@ -127,7 +104,7 @@ export default function App(): React.ReactElement {
         event: EVENTS.registerUser,
       }));
       setIsRegistered(true);
-      return handleNavigation('main');
+      return setView('main');
     },
     [name],
   );
@@ -152,59 +129,20 @@ export default function App(): React.ReactElement {
   );
 
   return (
-    <View style={styles.container}>
-      <StatusBar />
-      { loading && (<Spinner />) }
-      { !loading && connectionId && (
-        <View>
-          { !!error && (
-            <>
-              <Text>
-                { error }
-              </Text>
-              { showReconnect && (
-                <Pressable onPress={handleReconnect}>
-                  <Text>
-                    Reconnect
-                  </Text>
-                </Pressable>
-              ) }
-            </>
-          ) }
-          { !error && (
-            <>
-              { view === 'main' && (
-                <Main
-                  connectionId={connectionId}
-                  handleNavigation={handleNavigation}
-                  handleSignOut={handleSignOut}
-                  isRegistered={isRegistered}
-                  name={name}
-                />
-              ) }
-              { view === 'scanner' && (
-                <Scanner
-                  handleNavigation={handleNavigation}
-                  handleScanned={handleScanned}
-                />
-              ) }
-              { view === 'sign-in' && (
-                <SignIn
-                  connectionId={connectionId}
-                  handleNavigation={handleNavigation}
-                />
-              ) }
-              { view === 'sign-up' && (
-                <SignUp
-                  handleInput={handleInput}
-                  handleSubmit={handleSubmitSignUp}
-                  name={name}
-                />
-              ) }
-            </>
-          ) }
-        </View>
-      ) }
-    </View>
+    <AppLayout
+      connectionId={connectionId}
+      error={error}
+      handleInput={setName}
+      handleNavigation={setView}
+      handleReconnect={handleReconnect}
+      handleScanned={handleScanned}
+      handleSignOut={handleSignOut}
+      handleSubmitSignUp={handleSubmitSignUp}
+      isRegistered={isRegistered}
+      loading={loading}
+      name={name}
+      showReconnect={showReconnect}
+      view={view}
+    />
   );
 }
